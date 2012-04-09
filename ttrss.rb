@@ -281,6 +281,10 @@ class TTSettings
         reload_settings
     end
 
+    def stat
+        File.stat(@yaml_path)
+    end
+
     def reload_settings
         @yaml = filter_doc symbolify_keys Psych.load_file @yaml_path
 
@@ -526,6 +530,17 @@ class TTMain
         logs "Loading settings..."
         load_settings
 
+        trap("HUP") { @hup = true }
+        Thread.new do
+            while true
+                @hup = false
+                mtime = @settings.stat.mtime
+                sleep 1 until @hup || mtime != @settings.stat.mtime
+                # wake up if settings file is changed or SIGHUP
+                Thread.main.run
+            end
+        end
+
         if (poll = @settings.poll) && poll > 0
             while poll && poll > 0
                 process_accept refresh_feed
@@ -541,6 +556,7 @@ class TTMain
         else
             process_accept refresh_feed
         end
+        exit
     end
 
     def process_accept (list)
@@ -560,5 +576,7 @@ class TTMain
         @settings = TTSettings.new
     end
 end
+
+Thread.abort_on_exception = true
 
 TTMain.new
