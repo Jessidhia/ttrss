@@ -192,7 +192,7 @@ class TTEntries < Array
 end
 
 class TTFeed
-    attr_accessor :entries, :category, :prev_last_id, :last_id
+    attr_accessor :entries, :category, :prev_last_id, :last_id, :count
     def initialize
         self.entries = TTEntries.new
         self.category = {}
@@ -218,9 +218,11 @@ class TTFeed
 
     def add_new_items (rss)
         new_last_id = self.last_id
+        self.count = 0
         rss.items.each do |i|
             entry = TTEntry.new i
             if entry > self.last_id
+                self.count += 1
                 self.entries << entry
                 entry > new_last_id and new_last_id = entry.id
             end
@@ -535,7 +537,7 @@ class TTMain
     def refresh_feed
         @feed.update @settings.rss
 
-        logs "Filtering..."
+        logs "Filtering #{@feed.count} entries..."
         @feed.accept(@settings).filter_version_duplicates
     end
 
