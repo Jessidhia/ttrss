@@ -1,0 +1,118 @@
+---
+accept:
+# Entries are only accepted if all present attributes match
+# Conversely, any missing attribute is ignored for filtering purposes
+# You can use regexp named captures as filtering attributes, such as "res"
+# NOTE: all underscores in titles are converted to spaces before filtering
+# NOTE: the authorized field only works with tokyotosho
+# NOTE: the category field's content is source-dependent
+# NOTE: numeric named captures (such as res) have a value of -1 when not matched
+
+# These examples have random current shows that these groups are NOT doing
+# Example not using macros, to scare you straight
+- title: \[(?<group>SS)\] (?<name>SKET Dance) - (?<ep>\d+)(?:v(?<ver>\d+))? \(\d+x(?<res>720) h264\) \[(?i:(?<crc>[0-9a-f]{8}))\]\.mkv
+# Examples using them
+- commie: Ozma
+- frostii: Fairy Tail
+- horriblesubs: Accel World
+- utw: Space Brothers
+- sage: Zetman
+  # except for title, attributes can have a list of acceptable matches
+  bit: [ -1, 8 ] # only match 8-bit releases (8 if matched, -1 if not matched)
+deny:
+# Deny horriblesubs' 1080p releases (mostly plain upscales)
+# Remove if you want the extra bitrate / occasionally slightly better image
+- horriblesubs: .*
+  res: 1080
+
+# Order that variables are checked in order to tie break files with the same name and ep#
+# Variables are checked in order until one is different
+# When the different variable is found, the entry with the highest value is kept
+tie_break: [ res, bit, ver ]
+# URL to the RSS feed to be processed. Make sure to uncheck "anti-page widening"
+# The zwnj=0 in the included URL is the variable that disables widening.
+rss: http://www.tokyotosho.info/rss.php?zwnj=0
+# Time in seconds to wait between polls to the RSS feed
+# Set to 0 to disable polling and only run once.
+poll: 7200
+# Torrent save actions
+# if save: is empty, ttrss will just print the name + URL of any entry that is accepted
+# unless save is empty, ttrss saves the id of accepted files to ttrss.id.lst
+save:
+  # dir will download .torrent files to the specificed path (must exist)
+  dir: torrents
+  # urlfile will output URLs to the .torrent files to the specificed file
+  # use "-" for stdout (the quotes are important)
+  #urlfile: "-"
+  # magnetfile behaves the same as urlfile, but outputs magnet URIs
+  # only works when using tokyotosho's feed
+  #magnetfile: "-"
+
+
+defines:
+# Macros that can be called from other macros or accept/deny filters
+# When a macro is called, its contents are simply inserted in place of the macro call
+# A macro's elements can insert arguments by using $1, $2, $3, ..., $9
+# When a macro receives multiple arguments, they have to be put on a list
+
+# Macros that only receive a single argument can be called with the argument
+# in-line instead of in a list. See the examples in the accept list.
+
+# Regular expression tips:
+# The title attribute is parsed as a regexp and matched against the rss item's title
+# Try to use as much as possible of the title in the regexp to avoid false positives
+# NOTE: don't use underscores in the regexps; underscores are converted to spaces beforehand
+
+# Use (?:expression) to group an expression without making it capturing
+# Put a ? after a grouping construct to make it optional
+# Any integer named capture marked as optional will be set to -1 if not matched
+# for example, the "ver" match is usually -1 unless this is a "proper" release,
+# and thus it's usually 2 or more
+
+# Use the following named captures to help ttrss and the macro users:
+## (?<name>regexp_to_match_name)   # for the series' name
+## (?<group>regexp_to_match_group) # for the group's name
+## (?<ep>\d+)(?:-(?<endep>\d+))?   # for the integer episode number
+## (?:v(?<ver>\d+))?               # for the integer version tag
+## (?i:(?<crc>[0-9a-f]{8}))        # for the CRC32
+## (?<res>\d+)                     # for the integer height of the resolution
+## (?<bit>\d+)                     # for the integer bit depth marker (usually 10-bit or 8-bit)
+
+# Some of these example macros are used by other macros, but nothing prevents them
+# from being used from accept/deny filters
+
+  # macro that uses 3 arguments - used by other macros
+  generic_head:
+    title: \[(?<group>$1)\] (?<name>$2) - (?<ep>\d+)(?:-(?<endep>\d+))?(?:v(?<ver>\d+))? $3
+  # macro that uses 2 arguments and forwards them to another macro - used by other macros
+  generic:
+    # the list must be in full form if an element is non-trivial
+    generic_head:
+    - $1
+    - $2
+    - \[(?i:(?<crc>[0-9a-f]{8}))\]\.mkv
+  # macro that doesn't use any other macro, has one argument
+  horriblesubs:
+    title: \[(?<group>HorribleSubs)\] (?<name>$1) - (?<ep>\d+)(?:-(?<endep>\d+))? \[(?<res>\d+)p\](?:v(?<ver>\d+))?\.mkv
+  # macro that calls another macro and inserts another attribute check of its own
+  commie:
+    # the list can be in short form if there are no YAML syntax complications
+    generic: [ Commie, $1 ]
+    authorized: true
+  # macro that just forwards to another
+  frostii:
+    generic: [ Frostii, $1 ]
+  # macro that calls generic_head instead of going through generic
+  utw:
+    generic_head:
+    - UTW
+    - $1
+    - \[h264-(?<res>\d+)p\]\[(?i:(?<crc>[0-9a-f]{8}))\]\.mkv
+    authorized: true
+  # another macro that calls generic_head; this one has an optional "bit" match
+  # if "bit" does not match, it will be -1 (usually actually means 8)
+  sage:
+    generic_head:
+    - sage
+    - $1
+    - \[(?<res>\d+)p\](?:\[(?<bit>10)bit\])?\[(?i:(?<crc>[0-9a-f]{8}))\]\.mkv

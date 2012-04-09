@@ -256,98 +256,13 @@ class TTFeed
 end
 
 class TTSettings
-    @@defaults = <<EOF
----
-accept:
-# Entries are only accepted if all present attributes match
-# Conversely, any missing attribute is ignored for filtering purposes
-# You can use regexp named captures as filtering attributes, such as "res"
-# Use macros to make your life easier, see the "defines" section
-# NOTE: all underscores in titles are converted to spaces before filtering
-# NOTE: the authorized field only works with tokyotosho
-# NOTE: the category field's content is source-dependent
-- title: is a regular expression
-  descr: a dash indicates a new entry
-  note: indentation is important
-  sample_entry: true
-- examplemacro: Use macros like this
-  examplemacro2: [ or this, for multiple argument, macros ]
-  sample_entry: true
-- examplemacro3:
-  - or this
-  - if the shortand fails
-  sample_entry: true
-# You can delete the above samples
-deny:
-# Parsed the same as the accept list
-# Anything that matches these is ignored
-# The deny list is processed before the accept list
-
-# Order that variables are checked in order to tie break files with the same name and ep#
-# Variables are checked in order until one is different
-# When the different variable is found, the entry with the highest value is kept
-tie_break: [ res, bit, ver ]
-# URL to the RSS feed to be processed. Make sure to uncheck "anti-page widening"
-# The zwnj=0 in the included URL is the variable that disables widening.
-rss: https://www.tokyotosho.info/rss.php?zwnj=0
-# Time in seconds to wait between polls to the RSS feed
-# Set to 0 to disable polling and only run once.
-poll: 7200
-# Torrent save actions
-# if save: is empty, ttrss will just print the name + URL of any entry that is accepted
-# unless save is empty, ttrss saves the id of accepted files to ttrss.id.lst
-save:
-  # dir will download .torrent files to the specificed path (must exist)
-  dir: torrents/
-  # urlfile will output URLs to the .torrent files to the specificed file
-  # use "-" for stdout (the quotes are important)
-  #urlfile: "-"
-  # magnetfile behaves the same as urlfile, but outputs magnet URIs
-  # only works when using tokyotosho's feed
-  #magnetfile: "-"
-
-
-defines:
-# Macros that can be called by other macros or by accept/deny filters
-# Examples that are called from the sample entries in accept:
-  examplemacro:
-    title: $1
-  examplemacro2:
-    examplemacro: $1, $2 $3
-    authorized: true
-  examplemacro3:
-    examplemacro2:
-    - $1
-    - use these if the shortand lists give syntax errors
-    - $2
-# When a macro is called, its contents are simply inserted in place of the macro call
-# A macro's elements can insert arguments by using $1, $2, $3, ..., $9
-# When a macro receives multiple arguments, they have to be put on a list
-# See the invocations under accept for reference
-
-# Regular expression tips:
-# The title attribute is parsed as a regexp and matched against the rss item's title
-# Try to use as much as possible of the title in the regexp to avoid false positives
-# NOTE: don't use underscores in the regexps; underscores are converted to spaces beforehand
-# Use the following named captures to help ttrss and the macro users:
-## (?<name>regexp_to_match_name)   # for the series' name
-## (?<group>regexp_to_match_group) # for the group's name
-## (?<ep>\d+)(?:-(?<endep>\d+))?   # for the episode number
-## (?:v(?<ver>\d+))?               # for the version tag
-## (?i:(?<crc>[0-9a-f]{8}))        # for the CRC32
-## (?<res>\d+)                     # for the integer height of the resolution
-## (?<bit>\d+)                     # for the integer bit depth marker (usually 10-bit or 8-bit)
-EOF
-
     def initialize
         # TODO: should try on $HOME first
         @yaml_path = "ttrss.yaml"
         @id_path = "ttrss.id.lst"
 
         unless File.exists? @yaml_path
-            File.open(@yaml_path, "w") { |f| f.puts @@defaults }
-            puts "Wrote new config file to #{@yaml_path}"
-            puts "Customize #{@yaml_path} before rerunning ttrss"
+            puts "Copy ttrss.sample.yaml to ttrss.yaml and customize it before rerunning ttrss"
             exit
         end
 
