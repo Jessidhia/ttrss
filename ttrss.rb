@@ -603,7 +603,7 @@ class TTMain
                 # TODO: listen to SIGHUP to wakeup from sleep
 
                 logs "Reloading settings..."
-                load_settings
+                @settings.reload_settings
                 poll = @settings.poll
             end
         else
