@@ -354,7 +354,9 @@ EOF
         @ids = []
 
         @id_file = File.open(@id_path, File::RDWR|File::CREAT)
-        @id_file.flock(File::LOCK_EX) # prevent multiple instances
+        unless @id_file.flock(File::LOCK_EX|File::LOCK_NB)
+            raise RuntimeError.new("Another ttrss instance is already running")
+        end
         @id_file.each do |line|
             @ids << line.to_i
         end
