@@ -84,20 +84,18 @@ defines:
   # macro that simply returns a string - used by other macros
   # 1st argument is an expression to tack before the crc regexp (prefix)
   # 2nd argument is the same but tacked after it (suffix)
+  # NOTE: this shadows the "crc" named capture attribute in filters
+  # The "crc" attribute is not useful by itself since it's "unique" for each file
   crc: $1[\(\[](?i:(?<crc>[0-9a-f]{8}))[\)\]]$2
   # macro that uses 3 arguments - used by other macros
   generic_head:
     title: \[(?<group>$1)\] (?<name>$2) - (?<ep>\d+)(?:-(?<endep>\d+))?(?:v(?<ver>\d+))? $3
   # macro that uses 2 arguments and forwards them to another macro - used by other macros
   generic:
-    # the list must be in full form if an element is non-trivial
-    generic_head:
-    - $1
-    - $2
-    # call the crc string-building macro
+    # this argument list calls the crc string-building macro
     # the first argument (prefix) in this case is the empty string
     # the second argument (suffix) in this case is the file extension
-    - crc: [ '', \.mkv ]
+    generic_head: [ $1, $2, crc: [ '', \.mkv ] ]
   # macro that doesn't use any other macro, has one argument
   horriblesubs:
     title: \[(?<group>HorribleSubs)\] (?<name>$1) - (?<ep>\d+)(?:-(?<endep>\d+))? \[(?<res>\d+)p\](?:v(?<ver>\d+))?\.mkv
@@ -111,6 +109,8 @@ defines:
     generic: [ Frostii, $1 ]
   # macro that calls generic_head instead of going through generic
   utw:
+    # the list must be in full form if an element is non-trivial
+    # in this case, the crc call has regexp arguments with metacharacters
     generic_head:
     - UTW
     - $1
