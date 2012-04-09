@@ -19,7 +19,7 @@ def http_get_chunked (url, prefix = nil, headers = {}, &block)
     Net::HTTP.start(url.host, url.port) do |http|
         http.request_get(url.request_uri, headers) do |res|
             unless res.is_a? Net::HTTPSuccess
-                raise Error.new("Failed to get #{url} (HTTP #{res})")
+                raise IOError.new("Failed to get #{url} (HTTP #{res})")
             else
                 len = res['content-length'] ? res['content-length'].to_i : nil
                 res.read_body do |chunk|
