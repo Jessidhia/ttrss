@@ -286,7 +286,7 @@ class TTSettings
 
         [:accept, :deny].each do |k|
             @yaml[k] = [] unless @yaml[k]
-            @yaml[k].map!{|i| apply_defines i, @yaml[:defines]}
+            @yaml[k].map!{|i| apply_defines i}
         end
 
         # we don't need this anymore
@@ -457,24 +457,36 @@ class TTSettings
                 end
                 args[i-1]
             end
+        elsif e.is_a? Hash
+            apply_defines e
         else
             e
         end
     end
 
-    def apply_defines (target, defines)
+    def apply_defines (target)
         return { :title => target } if target.is_a? String
         unless target.is_a? Hash
             raise ArgumentError.new("Don't know how to deal with #{target.class}")
         end
+
+        defines = @yaml[:defines]
 
         ret = target.dup
         while (defines.keys & ret.keys).length > 0
             r = {}
             ret.each do |k,v|
                 if defines.keys.include? k
-                    defines[k].each do |def_k,sub|
-                        r[def_k] = apply_args sub, v
+                    if defines[k].is_a? String
+                        # XXX: HACK: SPECIAL CASE
+                        # For allowing macro arguments to be calls to other macros
+                        # This doesn't make sense if the other macro returns
+                        # anything other than a simple string
+                        return apply_args defines[k], v
+                    else
+                        defines[k].each do |def_k,sub|
+                            r[def_k] = apply_args sub, v
+                        end
                     end
                 else
                     r[k] = v

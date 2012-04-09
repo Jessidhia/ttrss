@@ -81,6 +81,10 @@ defines:
 # Some of these example macros are used by other macros, but nothing prevents them
 # from being used from accept/deny filters
 
+  # macro that simply returns a string - used by other macros
+  # 1st argument is an expression to tack before the crc regexp (prefix)
+  # 2nd argument is the same but tacked after it (suffix)
+  crc: $1[\(\[](?i:(?<crc>[0-9a-f]{8}))[\)\]]$2
   # macro that uses 3 arguments - used by other macros
   generic_head:
     title: \[(?<group>$1)\] (?<name>$2) - (?<ep>\d+)(?:-(?<endep>\d+))?(?:v(?<ver>\d+))? $3
@@ -90,7 +94,10 @@ defines:
     generic_head:
     - $1
     - $2
-    - \[(?i:(?<crc>[0-9a-f]{8}))\]\.mkv
+    # call the crc string-building macro
+    # the first argument (prefix) in this case is the empty string
+    # the second argument (suffix) in this case is the file extension
+    - crc: [ '', \.mkv ]
   # macro that doesn't use any other macro, has one argument
   horriblesubs:
     title: \[(?<group>HorribleSubs)\] (?<name>$1) - (?<ep>\d+)(?:-(?<endep>\d+))? \[(?<res>\d+)p\](?:v(?<ver>\d+))?\.mkv
@@ -107,7 +114,12 @@ defines:
     generic_head:
     - UTW
     - $1
-    - \[h264-(?<res>\d+)p\]\[(?i:(?<crc>[0-9a-f]{8}))\]\.mkv
+    # call the crc string-building macro
+    - crc:
+      # the prefix in this case is a resolution tag
+      - \[h264-(?<res>\d+)p\]
+      # the suffix is still the extension
+      - \.mkv
     authorized: true
   # another macro that calls generic_head; this one has an optional "bit" match
   # if "bit" does not match, it will be -1 (usually actually means 8)
@@ -115,4 +127,8 @@ defines:
     generic_head:
     - sage
     - $1
-    - \[(?<res>\d+)p\](?:\[(?<bit>10)bit\])?\[(?i:(?<crc>[0-9a-f]{8}))\]\.mkv
+    # call crc again
+    - crc:
+      # the prefix is now even longer
+      - \[(?<res>\d+)p\](?:\[(?<bit>10)bit\])?
+      - \.mkv
