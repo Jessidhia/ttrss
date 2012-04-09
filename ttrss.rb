@@ -458,13 +458,13 @@ class TTSettings
                 args[i-1]
             end
         elsif e.is_a? Hash
-            apply_defines e
+            apply_defines e, args
         else
             e
         end
     end
 
-    def apply_defines (target)
+    def apply_defines (target, args = nil)
         return { :title => target } if target.is_a? String
         unless target.is_a? Hash
             raise ArgumentError.new("Don't know how to deal with #{target.class}")
@@ -485,11 +485,14 @@ class TTSettings
                         return apply_args defines[k], v
                     else
                         defines[k].each do |def_k,sub|
-                            r[def_k] = apply_args sub, v
+                            # XXX: HACK: apply_args to the return of apply_args
+                            # to allow macros to do argument replacing when
+                            # macros return strings with argument places
+                            r[def_k] = apply_args(apply_args(sub, v), args || target[k])
                         end
                     end
                 else
-                    r[k] = v
+                    r[k] = apply_args v, args || []
                 end
             end
             ret = r
