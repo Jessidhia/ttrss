@@ -26,7 +26,7 @@ def http_get_chunked (url, prefix = nil, headers = {}, &block)
                     body += chunk
                     if len
                         STDERR.printf "\r%s %.2f%%", prefix, body.size * 100.0 / len if prefix
-                    else
+                    elsif prefix
                         STDERR.print "\r#{prefix} #{chunk_loop[chunk_i]}"
                         chunk_i = (chunk_i + 1) % chunk_loop.length
                     end
